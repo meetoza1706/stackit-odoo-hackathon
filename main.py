@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, jsonify
 import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 import uuid
@@ -6,12 +6,19 @@ from datetime import timedelta
 import smtplib
 from email.mime.text import MIMEText
 import random
+import cloudinary
+import cloudinary.uploader
 
 db = mysql.connector.connect(
     host="localhost",
     user="root",
     password="",
     database="stackit"
+)
+cloudinary.config(
+  cloud_name="YOUR_CLOUD_NAME",
+  api_key="YOUR_API_KEY",
+  api_secret="YOUR_API_SECRET"
 )
 cursor = db.cursor(dictionary=True)
 app = Flask(__name__)
@@ -25,6 +32,11 @@ def is_logged_in():
         return False
     cursor.execute("SELECT * FROM user_sessions WHERE user_id=%s AND session_token=%s", (uid, token))
     return cursor.fetchone() is not None
+
+def get_all_tags():
+    cursor.execute("SELECT name FROM tags ORDER BY post_count DESC")
+    return [row['name'] for row in cursor.fetchall()]
+
 
 @app.route('/')
 def home():
@@ -157,6 +169,61 @@ def forgot_password():
         return render_template('forgot_password.html', otp_stage=True)
 
     return render_template('forgot_password.html')
+
+@app.route('/ask_question', methods=['GET', 'POST'])
+def ask_question():
+    if not is_logged_in():
+        return redirect('/login')
+
+    if request.method == 'POST':
+        title = request.form.get('title', '').strip()
+        description = request.form.get('description', '').strip()
+        tags = request.form.getlist('tags[]')
+        user_id = session['user_id']
+
+        if not title or not description or not tags:
+            return render_template('ask_question.html', error="All fields required.", all_tags=get_all_tags())
+
+        if len(description) > 3000:
+            return render_template('ask_question.html', error="Description exceeds 3000 characters.", all_tags=get_all_tags())
+
+        try:
+            # Insert post
+            cursor.execute(
+                "INSERT INTO posts (user_id, title, description) VALUES (%s, %s, %s)",
+                (user_id, title, description)
+            )
+            post_id = cursor.lastrowid
+
+            for tag in tags:
+                clean_tag = tag.strip().lower()
+                cursor.execute("SELECT id FROM tags WHERE name = %s", (clean_tag,))
+                existing = cursor.fetchone()
+
+                if existing:
+                    tag_id = existing['id']
+                    cursor.execute("UPDATE tags SET post_count = post_count + 1 WHERE id = %s", (tag_id,))
+                else:
+                    cursor.execute("INSERT INTO tags (name, post_count) VALUES (%s, 1)", (clean_tag,))
+                    tag_id = cursor.lastrowid
+
+                cursor.execute("INSERT INTO post_tags (post_id, tag_id) VALUES (%s, %s)", (post_id, tag_id))
+
+            db.commit()
+            return redirect('/')
+
+        except Exception as e:
+            db.rollback()
+            return f"Error while posting: {e}", 500
+
+    return render_template('ask_question.html', all_tags=get_all_tags())
+
+@app.route('/tags_autocomplete')
+def tags_autocomplete():
+    cursor.execute("SELECT name FROM tags ORDER BY post_count DESC")
+    tags = [row['name'] for row in cursor.fetchall()]
+    return jsonify(tags)    
+
 
 if __name__ == '__main__':
     app.run(debug=True)
