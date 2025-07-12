@@ -3,6 +3,9 @@ import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 import uuid
 from datetime import timedelta
+import smtplib
+from email.mime.text import MIMEText
+import random
 
 db = mysql.connector.connect(
     host="localhost",
@@ -13,6 +16,7 @@ db = mysql.connector.connect(
 cursor = db.cursor(dictionary=True)
 app = Flask(__name__)
 app.secret_key = 'Meet0102'
+otp_store = {}
 
 def is_logged_in():
     uid = session.get('user_id')
@@ -62,8 +66,7 @@ def login():
             "SELECT * FROM users WHERE username=%s OR email=%s",
             (username_or_email, username_or_email)
         )
-        user = cursor.fetchone()
-        print(user)
+        user = cursor.fetchone()    
 
         if not user or not check_password_hash(user['password'], password):
             return render_template('login.html', error="Invalid username or password")
@@ -95,6 +98,65 @@ def logout():
 
     session.clear()
     return redirect('/')
+
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        if 'otp_stage' in request.form:
+            entered_code = request.form['otp'].strip()
+            new_pass = request.form['new_password']
+            confirm_pass = request.form['confirm_password']
+            email = session.get('reset_email')
+            expected_code = otp_store.get(email)
+
+            if not email or not expected_code:
+                return render_template('forgot_password.html', error="Session expired. Try again.")
+
+            if entered_code != expected_code:
+                return render_template('forgot_password.html', error="Incorrect OTP", otp_stage=True)
+
+            if len(new_pass) < 6:
+                return render_template('forgot_password.html', error="Password too short", otp_stage=True)
+
+            if new_pass != confirm_pass:
+                return render_template('forgot_password.html', error="Passwords do not match", otp_stage=True)
+
+            hashed = generate_password_hash(new_pass)
+            cursor.execute("UPDATE users SET password=%s WHERE email=%s", (hashed, email))
+            db.commit()
+
+            otp_store.pop(email, None)
+            session.pop('reset_email', None)
+            return redirect('/login')
+
+        # Stage 1: email submission
+        email = request.form['email'].strip()
+
+        cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+        user = cursor.fetchone()
+        if not user:
+            return render_template('forgot_password.html', error="Email not found")
+
+        code = str(random.randint(100000, 999999))
+        otp_store[email] = code
+        session['reset_email'] = email
+
+        msg = MIMEText(f"Your StackIt password reset code is: {code}")
+        msg['Subject'] = 'StackIt - Password Reset Code'
+        msg['From'] = 'ozamee17@gmail.com'
+        msg['To'] = email
+
+        try:
+            with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+                smtp.login('inventra8@gmail.com', 'tvvg ziwb bskk knym')
+                smtp.send_message(msg)
+        except Exception as e:
+            print("[DEBUG] Email sending failed:", e)
+            return render_template('forgot_password.html', error="Failed to send email")
+
+        return render_template('forgot_password.html', otp_stage=True)
+
+    return render_template('forgot_password.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
