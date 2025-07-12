@@ -1,89 +1,223 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Register</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Signup UI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          animation: {
+            float: "float 6s ease-in-out infinite",
+            blob: "blob 8s ease-in-out infinite",
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-12px)' },
+            },
+            blob: {
+              '0%': { transform: 'translate(0px, 0px) scale(1)' },
+              '33%': { transform: 'translate(30px, -20px) scale(1.05)' },
+              '66%': { transform: 'translate(-20px, 10px) scale(0.95)' },
+              '100%': { transform: 'translate(0px, 0px) scale(1)' },
+            },
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    @media (max-width: 640px) {
+      img[alt="Decorative Blob"] {
+        width: 160px !important;
+        left: -40px !important;
+      }
+    }
+
+    @media (min-width: 641px) and (max-width: 768px) {
+      img[alt="Decorative Blob"] {
+        width: 220px !important;
+        left: -60px !important;
+      }
+    }
+
+    @media (min-width: 769px) and (max-width: 1024px) {
+      img[alt="Decorative Blob"] {
+        width: 280px !important;
+        left: -70px !important;
+      }
+    }
+
+    @media (min-width: 1025px) and (max-width: 1280px) {
+      img[alt="Decorative Blob"] {
+        width: 320px !important;
+        left: -80px !important;
+      }
+    }
+
+    @media (min-width: 1281px) {
+      img[alt="Decorative Blob"] {
+        width: 360px !important;
+        left: -100px !important;
+      }
+    }
+  </style>
 </head>
-<body class="flex items-center justify-center min-h-screen bg-gray-100">
-    <a href="/" class="fixed top-4 left-4 text-sm font-semibold px-3 py-1 rounded-full border border-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition z-50">
-  Home
-  </a>
-  <form method="POST" onsubmit="return validateForm()" class="bg-white p-6 rounded shadow-md w-full max-w-sm" novalidate>
-    <h2 class="text-xl font-semibold mb-4">Register</h2>
 
-    <label class="block text-sm mb-1">Username</label>
-    <input id="username" name="username" placeholder="Username" required minlength="3" maxlength="80"
-           class="w-full p-2 border rounded mb-3">
+<body class="bg-[#fdfaf7] transition duration-300 overflow-x-hidden">
+  <div class="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-12 relative">
 
-    <label class="block text-sm mb-1">Email</label>
-    <input id="email" name="email" type="email" placeholder="Email" required
-           class="w-full p-2 border rounded mb-3">
+    <!-- Decorative Blob Image -->
+    <div class="absolute top-1/2 right-[900px] transform -translate-y-1/2 z-0">
+      <img src="static/images/PNG-Homepage.png" alt="Decorative Blob"
+        class="w-40 sm:w-48 md:w-56 lg:w-64 xl:w-72 opacity-80 pointer-events-none animate-float select-none" />
+    </div>
 
-    <label class="block text-sm mb-1">Password</label>
-    <input id="password" name="password" type="password" placeholder="Password" required minlength="6" maxlength="120"
-           class="w-full p-2 border rounded mb-3">
+    <!-- Sign Up Card -->
+    <div class="relative bg-white text-black rounded-xl shadow-md w-full max-w-sm sm:max-w-md p-4 sm:p-6 md:p-8 z-10">
+      <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-center mb-6">Sign Up</h2>
 
-    <label class="block text-sm mb-1">Confirm Password</label>
-    <input id="cpassword" name="cpassword" type="password" placeholder="Confirm Password" required
-           class="w-full p-2 border rounded mb-3">
+      <!-- Step 1 -->
+      <form id="step1" class="space-y-4">
+        <div>
+          <label class="font-semibold block">Username</label>
+          <input id="username" name="username" type="text" placeholder="Your username"
+            class="w-full border border-gray-400 rounded-md px-4 py-2 mt-1" />
+        </div>
+        <div>
+          <label class="font-semibold block">Email</label>
+          <input id="email" name="email" type="email" placeholder="Your email"
+            class="w-full border border-gray-400 rounded-md px-4 py-2 mt-1" />
+        </div>
+        <div id="error1" class="text-red-600 text-sm hidden"></div>
+        <button type="button" onclick="goToStep2()"
+          class="w-full bg-[#0d5c74] text-white py-2 rounded-md hover:bg-[#084458] transition">
+          Next
+        </button>
+        <p class="text-sm text-center pt-2">
+          Already have an account?
+          <a href="#" class="text-[#0d5c74] font-medium hover:underline">Log In</a>
+        </p>
+      </form>
 
-    <label class="block text-sm mb-1">Admin Code (optional)</label>
-    <input name="admin_code" placeholder="Admin Code"
-           class="w-full p-2 border rounded mb-4">
+      <!-- Step 2 -->
+      <form id="step2" class="space-y-4 hidden" onsubmit="return validateFinalStep(event)">
+        <div>
+          <label class="font-semibold block">Password</label>
+          <input id="password" name="password" type="password" placeholder="Your password"
+            class="w-full border border-gray-400 rounded-md px-4 py-2 mt-1" />
+        </div>
+        <div>
+          <label class="font-semibold block">Confirm Password</label>
+          <input id="cpassword" name="cpassword" type="password" placeholder="Confirm password"
+            class="w-full border border-gray-400 rounded-md px-4 py-2 mt-1" />
+        </div>
+        <p class="text-sm text-center pt-2">
+          Are you an Admin?
+          <a href="#" class="font-semibold text-black hover:underline" onclick="toggleAdminModal(event)">Click here</a>
+        </p>
+        <div id="error2" class="text-red-600 text-sm hidden"></div>
+        <button type="submit"
+          class="w-full bg-[#0d5c74] text-white py-2 rounded-md hover:bg-[#084458] transition">
+          Sign Up
+        </button>
+        <p class="text-sm text-center pt-2">
+          Already have an account?
+          <a href="/login" class="text-[#0d5c74] font-medium hover:underline">Log In</a>
+        </p>
+      </form>
+    </div>
 
-    <div id="error" class="text-red-600 text-sm mb-3 hidden"></div>
-    {% if server_error %}
-      <div class="text-red-600 text-sm mb-3">{{ server_error }}</div>
-    {% endif %}
+    <!-- Admin Modal -->
+    <div id="adminModal"
+      class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm z-50 hidden px-4">
+      <div class="bg-white text-black rounded-xl shadow-md w-full max-w-sm p-6 relative">
+        <button onclick="toggleAdminModal(event)" class="absolute top-2 right-2 text-lg font-bold">&times;</button>
+        <h2 class="text-lg font-bold text-center mb-4">Are you an Admin?</h2>
+        <div>
+          <label class="font-semibold block">Admin Code</label>
+          <input id="adminCode" name="admin_code" type="text" placeholder="write code here"
+            class="w-full border border-gray-400 rounded-md px-4 py-2 mt-1" />
+        </div>
+        <button onclick="submitAdminCode()"
+          class="mt-4 w-full bg-[#0d5c74] text-white py-2 rounded-md hover:bg-[#084458] transition">Continue</button>
+      </div>
+    </div>
 
-    <button type="submit"
-            class="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">
-      Register
-    </button>
-
-    <p class="mt-4 text-sm text-center">
-      Already have an account?
-      <a href="/login" class="text-blue-600 underline">Login</a>
-    </p>
-  </form>
+    <!-- Admin Success Message -->
+    <div id="adminSuccessPage"
+      class="fixed inset-0 flex items-center justify-center bg-[#fdfaf7] text-black text-center text-lg sm:text-xl md:text-2xl font-bold z-50 hidden px-4">
+      🎉 Welcome, Admin! You’ve successfully signed up.
+    </div>
+  </div>
 
   <script>
-    function validateForm() {
+    function goToStep2() {
       const username = document.getElementById('username').value.trim();
       const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-      const cpassword = document.getElementById('cpassword').value;
-      const error = document.getElementById('error');
+      const error = document.getElementById('error1');
 
-      const usernameRegex = /^[a-zA-Z0-9_-]+$/;
+      const usernameRegex = /^[a-zA-Z0-9_-]{3,80}$/;
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{6,}$/;
 
       if (!usernameRegex.test(username)) {
-        return showError("Username must be alphanumeric and may contain _ or - (no spaces)");
+        return showError(error, "Username must be alphanumeric and may contain _ or - (min 3 chars)");
       }
-
       if (!emailRegex.test(email)) {
-        return showError("Invalid email format");
-      }
-
-      if (!passwordRegex.test(password)) {
-        return showError("Password must have uppercase, lowercase, number,special character and also must be atleast 6 characters");
-      }
-
-      if (password !== cpassword) {
-        return showError("Passwords do not match");
+        return showError(error, "Invalid email format");
       }
 
       error.classList.add('hidden');
+      document.getElementById('step1').classList.add('hidden');
+      document.getElementById('step2').classList.remove('hidden');
+    }
+
+    function validateFinalStep(event) {
+      event.preventDefault();
+      const password = document.getElementById('password').value;
+      const cpassword = document.getElementById('cpassword').value;
+      const error = document.getElementById('error2');
+
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{6,}$/;
+
+      if (!passwordRegex.test(password)) {
+        return showError(error, "Password must have uppercase, lowercase, number, special char, min 6 chars");
+      }
+      if (password !== cpassword) {
+        return showError(error, "Passwords do not match");
+      }
+
+      error.classList.add('hidden');
+      // Proceed to submit or show admin success if needed
+      alert("Form submitted successfully!");
       return true;
     }
 
-    function showError(message) {
-      const error = document.getElementById('error');
-      error.textContent = message;
-      error.classList.remove('hidden');
+    function showError(el, msg) {
+      el.textContent = msg;
+      el.classList.remove('hidden');
       return false;
+    }
+
+    function toggleAdminModal(event) {
+      event.preventDefault();
+      const modal = document.getElementById('adminModal');
+      modal.classList.toggle('hidden');
+    }
+
+    function submitAdminCode() {
+      const code = document.getElementById('adminCode').value.trim();
+      if (code === "admin123") {
+        document.getElementById('adminModal').classList.add('hidden');
+        document.getElementById('step1').classList.add('hidden');
+        document.getElementById('step2').classList.add('hidden');
+        document.getElementById('adminSuccessPage').classList.remove('hidden');
+      } else {
+        alert("Invalid admin code");
+      }
     }
   </script>
 </body>
