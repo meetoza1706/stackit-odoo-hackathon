@@ -1,130 +1,130 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>All Questions - StackIt</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>tailwind.config = { darkMode: 'class' }</script>
-  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet" />
-  <style>
-    .prose img {
-      max-width: 100%;
-      height: auto;
-    }
-  </style>
-</head>
-<body class="bg-white text-black dark:bg-gray-900 dark:text-white min-h-screen px-6 py-10">
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>All Questions - StackIt</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet" />
+    <style>
+      .prose img {
+        max-width: 100%;
+        height: auto;
+      }
+    </style>
+  </head>
+  <body class="bg-white text-black dark:bg-gray-900 dark:text-white min-h-screen px-6 py-10">
 
-<div class="max-w-4xl mx-auto">
-  <h1 class="text-3xl font-bold mb-6 text-center">📚 All Questions</h1>
+  <div class="max-w-4xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6 text-center">📚 All Questions</h1>
 
-  {% if posts %}
-    <div class="space-y-6">
-      {% for post in posts %}
-        <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
-          <!-- Post Header -->
-          <button onclick="togglePost('{{ post.id }}')" class="w-full text-left">
-            <h2 class="text-2xl text-blue-600 font-semibold hover:underline">{{ post.title }}</h2>
-            <p class="text-sm text-gray-500 mt-1">
-              Asked by {{ post.username }} on {{ post.created_at.strftime('%d %B %Y') }}
-            </p>
-            <div class="flex gap-2 flex-wrap mt-2">
-              {% for tag in post.tags %}
-                <span class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm">#{{ tag }}</span>
-              {% endfor %}
-            </div>
-          </button>
+    {% if posts %}
+      <div class="space-y-6">
+        {% for post in posts %}
+          <div class="bg-white dark:bg-gray-800 p-6 rounded shadow">
+            <!-- Post Header -->
+            <button onclick="togglePost('{{ post.id }}')" class="w-full text-left">
+              <h2 class="text-2xl text-blue-600 font-semibold hover:underline">{{ post.title }}</h2>
+              <p class="text-sm text-gray-500 mt-1">
+                Asked by {{ post.username }} on {{ post.created_at.strftime('%d %B %Y') }}
+              </p>
+              <div class="flex gap-2 flex-wrap mt-2">
+                {% for tag in post.tags %}
+                  <span class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm">#{{ tag }}</span>
+                {% endfor %}
+              </div>
+            </button>
 
-          <!-- Collapsible Content -->
-          <div id="post-{{ post.id }}" class="hidden mt-4 border-t pt-4">
-            <div class="prose dark:prose-invert max-w-none mb-4">
-              {{ post.description | safe }}
-            </div>
+            <!-- Collapsible Content -->
+            <div id="post-{{ post.id }}" class="hidden mt-4 border-t pt-4">
+              <div class="prose dark:prose-invert max-w-none mb-4">
+                {{ post.description | safe }}
+              </div>
 
-            <h3 class="text-lg font-bold mb-2">Answers</h3>
+              <h3 class="text-lg font-bold mb-2">Answers</h3>
 
-            {% for answer in post.answers %}
-              <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded mb-3 flex items-start gap-3">
-                <!-- Vote UI -->
-                <div class="flex flex-col items-center mr-2">
-                  <button onclick="vote({{ answer.id }}, 'up')" class="text-green-500 hover:scale-110">▲</button>
-                  <span id="vote-count-{{ answer.id }}">{{ answer.votes }}</span>
-                  <button onclick="vote({{ answer.id }}, 'down')" class="text-red-500 hover:scale-110">▼</button>
-                </div>
+              {% for answer in post.answers %}
+                <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded mb-3 flex items-start gap-3">
+                  <!-- Vote UI -->
+                  <div class="flex flex-col items-center mr-2">
+                    <button onclick="vote({{ answer.id }}, 'up')" class="text-green-500 hover:scale-110">▲</button>
+                    <span id="vote-count-{{ answer.id }}">{{ answer.votes }}</span>
+                    <button onclick="vote({{ answer.id }}, 'down')" class="text-red-500 hover:scale-110">▼</button>
+                  </div>
 
-                <div>
-                  <div class="text-sm text-gray-500 mb-1">by {{ answer.username }} • {{ answer.created_at.strftime('%d %b %Y') }}</div>
-                  <div class="prose dark:prose-invert max-w-none overflow-x-auto">
-                    {{ answer.content | safe }}
+                  <div>
+                    <div class="text-sm text-gray-500 mb-1">by {{ answer.username }} • {{ answer.created_at.strftime('%d %b %Y') }}</div>
+                    <div class="prose dark:prose-invert max-w-none overflow-x-auto">
+                      {{ answer.content | safe }}
+                    </div>
                   </div>
                 </div>
-              </div>
-            {% else %}
-              <p class="text-gray-500">No answers yet.</p>
-            {% endfor %}
+              {% else %}
+                <p class="text-gray-500">No answers yet.</p>
+              {% endfor %}
 
-            <!-- Answer Form -->
-            {% if session['user_id'] %}
-              <h4 class="text-lg font-semibold mt-6 mb-2">Submit Your Answer</h4>
-              <form method="POST" action="/submit_answer" onsubmit="return submitAnswer(event, {{ post.id }})">
-                <div id="editor-{{ post.id }}" class="bg-white text-black h-32 mb-3"></div>
-                <input type="hidden" name="content" id="content-{{ post.id }}">
-                <input type="hidden" name="post_id" value="{{ post.id }}">
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Post Answer</button>
-              </form>
-            {% else %}
-              <p class="text-gray-400 mt-4">Login to post an answer.</p>
-            {% endif %}
+              <!-- Answer Form -->
+              {% if session['user_id'] %}
+                <h4 class="text-lg font-semibold mt-6 mb-2">Submit Your Answer</h4>
+                <form method="POST" action="/submit_answer" onsubmit="return submitAnswer(event, {{ post.id }})">
+                  <div id="editor-{{ post.id }}" class="bg-white text-black h-32 mb-3"></div>
+                  <input type="hidden" name="content" id="content-{{ post.id }}">
+                  <input type="hidden" name="post_id" value="{{ post.id }}">
+                  <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Post Answer</button>
+                </form>
+              {% else %}
+                <p class="text-gray-400 mt-4">Login to post an answer.</p>
+              {% endif %}
+            </div>
           </div>
-        </div>
-      {% endfor %}
-    </div>
-  {% else %}
-    <p class="text-center text-gray-500">No questions found.</p>
-  {% endif %}
-</div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-center text-gray-500">No questions found.</p>
+    {% endif %}
+  </div>
 
-<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
-<script>
-  const editors = {};
+  <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+  <script>
+    const editors = {};
 
-  function togglePost(id) {
-    const section = document.getElementById(`post-${id}`);
-    section.classList.toggle('hidden');
+    function togglePost(id) {
+      const section = document.getElementById(`post-${id}`);
+      section.classList.toggle('hidden');
 
-    // Init Quill only once
-    if (!editors[id] && document.getElementById(`editor-${id}`)) {
-      editors[id] = new Quill(`#editor-${id}`, {
-        theme: 'snow',
-        placeholder: 'Write your answer...',
-        modules: {
-          toolbar: [['bold', 'italic', 'strike'], ['link', 'image'], [{ 'list': 'ordered'}, { 'list': 'bullet' }]]
-        }
+      // Init Quill only once
+      if (!editors[id] && document.getElementById(`editor-${id}`)) {
+        editors[id] = new Quill(`#editor-${id}`, {
+          theme: 'snow',
+          placeholder: 'Write your answer...',
+          modules: {
+            toolbar: [['bold', 'italic', 'strike'], ['link', 'image'], [{ 'list': 'ordered'}, { 'list': 'bullet' }]]
+          }
+        });
+      }
+    }
+
+    function submitAnswer(e, postId) {
+      e.preventDefault();
+      const content = editors[postId].root.innerHTML.trim();
+      if (content.length < 10) {
+        alert("Answer is too short.");
+        return false;
+      }
+      document.getElementById(`content-${postId}`).value = content;
+      e.target.submit();
+    }
+
+    async function vote(answerId, type) {
+      const res = await fetch('/vote_answer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answer_id: answerId, vote_type: type })
       });
+      const data = await res.json();
+      document.getElementById(`vote-count-${answerId}`).textContent = data.upvotes - data.downvotes;
     }
-  }
+  </script>
 
-  function submitAnswer(e, postId) {
-    e.preventDefault();
-    const content = editors[postId].root.innerHTML.trim();
-    if (content.length < 10) {
-      alert("Answer is too short.");
-      return false;
-    }
-    document.getElementById(`content-${postId}`).value = content;
-    e.target.submit();
-  }
-
-  async function vote(answerId, type) {
-    const res = await fetch('/vote_answer', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ answer_id: answerId, vote_type: type })
-    });
-    const data = await res.json();
-    document.getElementById(`vote-count-${answerId}`).textContent = data.upvotes - data.downvotes;
-  }
-</script>
-
-</body>
-</html>
+  </body>
+  </html>

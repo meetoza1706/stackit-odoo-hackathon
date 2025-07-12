@@ -1,0 +1,55 @@
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <title>StackIt</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  </head>
+  <body class="bg-gray-100 p-6 text-gray-800">
+    <h1 class="text-2xl font-bold">Welcome to StackIt</h1>
+    <a href="/register">sign up</a><br>
+    <a href="/logout">logout</a><br>
+    <a href="/login">login</a><br>
+    <a href="/forgot_password">forgot password</a><br>
+    <a href="/ask_question">ask Question</a><br>
+    <a href="/questions">view Questions</a><br>
+    <button onclick="openModal()" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded">
+    🔔 View Notifications
+    </button>
+    <!-- Notification Modal -->
+    <div id="notifModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center">
+    <div class="bg-white w-full max-w-md p-6 rounded shadow-xl relative">
+      <h2 class="text-xl font-bold mb-4">Notifications</h2>
+      <ul id="notifList" class="space-y-2 max-h-64 overflow-y-auto text-sm text-gray-700">
+        <li>Loading...</li>
+      </ul>
+      <button onclick="closeModal()" class="absolute top-2 right-3 text-gray-500 hover:text-black text-xl">&times;</button>
+    </div>
+    </div>
+
+
+    <script>
+  function openModal() {
+    document.getElementById('notifModal').classList.remove('hidden');
+    fetch('/notifications/json')
+      .then(res => res.json())
+      .then(data => {
+        const ul = document.getElementById('notifList');
+        ul.innerHTML = '';
+        if (data.length === 0) {
+          ul.innerHTML = '<li class="text-gray-400">No notifications</li>';
+        } else {
+          data.forEach(note => {
+            ul.innerHTML += `<li class="border-b py-2">${note.message}</li>`;
+          });
+        }
+      });
+  }
+
+  function closeModal() {
+    document.getElementById('notifModal').classList.add('hidden');
+  }
+  </script>
+
+
+  </body>
+  </html>
