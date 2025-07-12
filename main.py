@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, session, jsonify
 import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 import uuid
-from datetime import timedelta
+from datetime import timedelta, datetime
 import smtplib
 from email.mime.text import MIMEText
 import random
@@ -16,14 +16,16 @@ db = mysql.connector.connect(
     database="stackit"
 )
 cloudinary.config(
-  cloud_name="YOUR_CLOUD_NAME",
-  api_key="YOUR_API_KEY",
-  api_secret="YOUR_API_SECRET"
+  cloud_name="dyab0etow",
+  api_key="829971282552343",
+  api_secret="rOe_MAJN--sVuITTNQAYkZvrFss"
 )
 cursor = db.cursor(dictionary=True)
 app = Flask(__name__)
 app.secret_key = 'Meet0102'
 otp_store = {}
+app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024  # 200 MB
+
 
 def is_logged_in():
     uid = session.get('user_id')
@@ -170,59 +172,185 @@ def forgot_password():
 
     return render_template('forgot_password.html')
 
+@app.route('/upload_image', methods=['POST'])
+def upload_image():
+    image = request.files.get('image')
+    if not image:
+        return jsonify(success=False)
+    res = cloudinary.uploader.upload(image)
+    return jsonify(success=True, url=res['secure_url'])
+
 @app.route('/ask_question', methods=['GET', 'POST'])
 def ask_question():
     if not is_logged_in():
         return redirect('/login')
-
     if request.method == 'POST':
-        title = request.form.get('title', '').strip()
-        description = request.form.get('description', '').strip()
+        title = request.form['title'].strip()
+        description = request.form['description'].strip()
         tags = request.form.getlist('tags[]')
-        user_id = session['user_id']
-
         if not title or not description or not tags:
-            return render_template('ask_question.html', error="All fields required.", all_tags=get_all_tags())
-
-        if len(description) > 3000:
-            return render_template('ask_question.html', error="Description exceeds 3000 characters.", all_tags=get_all_tags())
-
-        try:
-            # Insert post
-            cursor.execute(
-                "INSERT INTO posts (user_id, title, description) VALUES (%s, %s, %s)",
-                (user_id, title, description)
-            )
-            post_id = cursor.lastrowid
-
-            for tag in tags:
-                clean_tag = tag.strip().lower()
-                cursor.execute("SELECT id FROM tags WHERE name = %s", (clean_tag,))
-                existing = cursor.fetchone()
-
-                if existing:
-                    tag_id = existing['id']
-                    cursor.execute("UPDATE tags SET post_count = post_count + 1 WHERE id = %s", (tag_id,))
-                else:
-                    cursor.execute("INSERT INTO tags (name, post_count) VALUES (%s, 1)", (clean_tag,))
-                    tag_id = cursor.lastrowid
-
-                cursor.execute("INSERT INTO post_tags (post_id, tag_id) VALUES (%s, %s)", (post_id, tag_id))
-
-            db.commit()
-            return redirect('/')
-
-        except Exception as e:
-            db.rollback()
-            return f"Error while posting: {e}", 500
-
+            return render_template('ask_question.html', all_tags=get_all_tags(), error="All fields required.")
+        cursor.execute("INSERT INTO posts (user_id, title, description) VALUES (%s,%s,%s)",
+                       (session['user_id'], title, description))
+        post_id = cursor.lastrowid
+        for tg in tags:
+            t = tg.strip().lower()
+            cursor.execute("SELECT id FROM tags WHERE name=%s", (t,))
+            row = cursor.fetchone()
+            if row:
+                tag_id = row['id']
+                cursor.execute("UPDATE tags SET post_count=post_count+1 WHERE id=%s", (tag_id,))
+            else:
+                cursor.execute("INSERT INTO tags (name, post_count) VALUES (%s,1)", (t,))
+                tag_id = cursor.lastrowid
+            cursor.execute("INSERT INTO post_tags (post_id, tag_id) VALUES (%s,%s)",
+                           (post_id, tag_id))
+        db.commit()
+        return redirect(f'/question/{post_id}')
     return render_template('ask_question.html', all_tags=get_all_tags())
 
-@app.route('/tags_autocomplete')
+@app.route('/question/<int:post_id>')
+def view_question(post_id):
+    cursor.execute("""
+        SELECT p.id, p.title, p.description, p.created_at, u.username
+        FROM posts p JOIN users u ON p.user_id=u.id
+        WHERE p.id=%s""", (post_id,))
+    post = cursor.fetchone()
+    if not post:
+        return "Post not found", 404
+    cursor.execute("""
+        SELECT t.name
+        FROM tags t JOIN post_tags pt ON pt.tag_id=t.id
+        WHERE pt.post_id=%s""", (post_id,))
+    tags = [r['name'] for r in cursor.fetchall()]
+    return render_template('view_question.html', post=post, tags=tags)
+
+@app.route('/tags')
 def tags_autocomplete():
-    cursor.execute("SELECT name FROM tags ORDER BY post_count DESC")
-    tags = [row['name'] for row in cursor.fetchall()]
-    return jsonify(tags)    
+    cursor.execute("SELECT name FROM tags ORDER BY post_count DESC LIMIT 50")
+    return jsonify([r['name'] for r in cursor.fetchall()])
+
+@app.route('/questions')
+def all_questions():
+    cursor = db.cursor(dictionary=True)
+
+    # 1. Fetch posts with user + tags
+    cursor.execute("""
+        SELECT posts.id, posts.title, users.username, posts.description, posts.created_at,
+               GROUP_CONCAT(tags.name) AS tag_list
+        FROM posts
+        JOIN users ON posts.user_id = users.id
+        LEFT JOIN post_tags ON posts.id = post_tags.post_id
+        LEFT JOIN tags ON post_tags.tag_id = tags.id
+        GROUP BY posts.id
+        ORDER BY posts.created_at DESC
+    """)
+    posts = cursor.fetchall()
+
+    # 2. Fetch answers with vote count
+    cursor.execute("""
+        SELECT 
+            a.id, a.post_id, a.content, a.created_at, u.username,
+            COALESCE(SUM(CASE WHEN av.vote_type = 'up' THEN 1 
+                              WHEN av.vote_type = 'down' THEN -1 ELSE 0 END), 0) AS votes
+        FROM answers a
+        JOIN users u ON a.user_id = u.id
+        LEFT JOIN answer_votes av ON a.id = av.answer_id
+        GROUP BY a.id
+    """)
+    all_answers = cursor.fetchall()
+
+    # 3. Attach answers to their posts
+    answers_by_post = {}
+    for ans in all_answers:
+        answers_by_post.setdefault(ans['post_id'], []).append(ans)
+
+    # 4. Attach tags and answers
+    for post in posts:
+        post['tags'] = post['tag_list'].split(',') if post['tag_list'] else []
+        post['answers'] = answers_by_post.get(post['id'], [])
+
+    return render_template('view_questions.html', posts=posts)
+
+
+@app.route('/submit_answer', methods=['POST'])
+def submit_answer():
+    if not is_logged_in():
+        return redirect('/login')
+
+    post_id = request.form.get('post_id')
+    content = request.form.get('content', '').strip()
+
+    # Validate
+    if not post_id or not content or len(content) < 10:
+        return "Answer too short or missing", 400
+
+    # Store raw HTML (including Cloudinary image URLs)
+    cursor.execute("""
+        INSERT INTO answers (post_id, user_id, content, created_at)
+        VALUES (%s, %s, %s, %s)
+    """, (post_id, session['user_id'], content, datetime.now()))
+    db.commit()
+
+    return redirect('/questions')
+
+@app.route('/vote_answer', methods=['POST'])
+def vote_answer():
+    if not is_logged_in():
+        return jsonify({'error': 'Not logged in'}), 403
+
+    data = request.get_json()
+    answer_id = data.get('answer_id')
+    vote_type = data.get('vote_type')
+    user_id = session['user_id']
+
+    if vote_type not in ['up', 'down']:
+        return jsonify({'error': 'Invalid vote'}), 400
+
+    # Check existing vote
+    cursor.execute("""
+        SELECT vote_type FROM answer_votes 
+        WHERE answer_id = %s AND user_id = %s
+    """, (answer_id, user_id))
+    existing = cursor.fetchone()
+
+    if existing:
+        if existing['vote_type'] == vote_type:
+            # Remove vote (toggle off)
+            cursor.execute("""
+                DELETE FROM answer_votes 
+                WHERE answer_id = %s AND user_id = %s
+            """, (answer_id, user_id))
+        else:
+            # Switch vote type
+            cursor.execute("""
+                UPDATE answer_votes 
+                SET vote_type = %s, created_at = %s 
+                WHERE answer_id = %s AND user_id = %s
+            """, (vote_type, datetime.now(), answer_id, user_id))
+    else:
+        # New vote
+        cursor.execute("""
+            INSERT INTO answer_votes (answer_id, user_id, vote_type, created_at)
+            VALUES (%s, %s, %s, %s)
+        """, (answer_id, user_id, vote_type, datetime.now()))
+
+    db.commit()
+
+    # Get updated count
+    cursor.execute("""
+        SELECT 
+          SUM(CASE WHEN vote_type = 'up' THEN 1 ELSE 0 END) AS upvotes,
+          SUM(CASE WHEN vote_type = 'down' THEN 1 ELSE 0 END) AS downvotes
+        FROM answer_votes
+        WHERE answer_id = %s
+    """, (answer_id,))
+    result = cursor.fetchone()
+
+    return jsonify({
+        'upvotes': result['upvotes'] or 0,
+        'downvotes': result['downvotes'] or 0
+    })
 
 
 if __name__ == '__main__':
