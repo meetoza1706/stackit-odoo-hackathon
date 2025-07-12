@@ -1,71 +1,143 @@
-  <!DOCTYPE html>
-  <html>
-  <head>
-    <title>Login</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  </head>
-    <a href="/" class="fixed top-4 left-4 text-sm font-semibold px-3 py-1 rounded-full border border-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition z-50">
-  Home
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          animation: {
+            float: "float 6s ease-in-out infinite",
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-12px)' },
+            }
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    @media (max-width: 640px) {
+      img[alt="Decorative Blob"] {
+        width: 180px !important;
+        left: -30px !important;
+      }
+    }
+
+    @media (max-width: 768px) {
+      img[alt="Decorative Blob"] {
+        width: 240px !important;
+        left: -20px !important;
+      }
+    }
+
+    @media (max-width: 1024px) {
+      img[alt="Decorative Blob"] {
+        width: 300px !important;
+      }
+    }
+
+    @media (max-width: 1280px) {
+      img[alt="Decorative Blob"] {
+        width: 340px !important;
+      }
+    }
+
+    @media (min-width: 1281px) {
+      img[alt="Decorative Blob"] {
+        width: 380px !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-[#fdfaf7] transition duration-300 overflow-x-hidden">
+  <a href="/" class="fixed top-4 left-4 text-sm font-semibold px-3 py-1 rounded-full border border-gray-400 hover:bg-gray-100 transition z-50">
+    Home
   </a>
-  <body class="flex items-center justify-center min-h-screen bg-gray-100">
-    <form method="POST" onsubmit="return validateLogin()" class="bg-white p-6 rounded shadow-md w-full max-w-sm" novalidate>
-      <h2 class="text-xl font-semibold mb-4">Login</h2>
 
-      <label class="block text-sm mb-1">Username or Email</label>
-      <input id="username" name="username" placeholder="Username or Email" required minlength="3" maxlength="80"
-            class="w-full p-2 border rounded mb-3">
+  <div class="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-12 relative">
+    <!-- Decorative Blob Image -->
+    <div class="absolute top-1/2 right-[900px] transform -translate-y-1/2 z-0">
+      <img src="static/images/PNG-Homepage.png" alt="Decorative Blob"
+        class="w-40 sm:w-48 md:w-56 lg:w-64 xl:w-72 opacity-80 pointer-events-none animate-float select-none" />
+    </div>
 
-      <label class="block text-sm mb-1">Password</label>
-      <input id="password" name="password" type="password" placeholder="Password" required minlength="6"
-            class="w-full p-2 border rounded mb-3">
+    <!-- Login Card -->
+    <div class="relative bg-white text-black rounded-xl shadow-md w-full max-w-sm sm:p-8 p-6 z-10">
+      <h2 class="text-2xl font-bold text-center mb-6">Log In</h2>
 
-      <div id="error" class="text-red-600 text-sm mb-3 {% if not error %}hidden{% endif %}">
-        {{ error if error else '' }}
-      </div>
+      <form method="POST" onsubmit="return validateLogin()" class="space-y-4" novalidate>
+        <div>
+          <label class="font-semibold block">Email or Username</label>
+          <input id="username" name="username" placeholder="Your email or username" required minlength="3" maxlength="80"
+            class="w-full border border-gray-400 rounded-md px-4 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        </div>
+        <div>
+          <label class="font-semibold block">Password</label>
+          <input id="password" name="password" type="password" placeholder="Your password" required minlength="6"
+            class="w-full border border-gray-400 rounded-md px-4 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        </div>
 
-      <button type="submit"
-              class="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">
-        Login
-      </button>
+        <div id="error" class="text-red-600 text-sm mb-2 hidden">
+          <!-- Error message appears here -->
+        </div>
 
-      <p class="mt-4 text-sm text-center">
-        Don't have an account?
-        <a href="/register" class="text-blue-600 underline">Register</a>
-      </p>
-    </form>
+        <div class="text-right text-sm text-gray-600">
+          <a href="#" class="hover:underline">Forgot password ?</a>
+        </div>
 
-    <script>
-      function validateLogin() {
-        const input = document.getElementById('username').value.trim();
-        const password = document.getElementById('password').value;
-        const error = document.getElementById('error');
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const usernameRegex = /^[a-zA-Z0-9_-]{3,80}$/;
+        <button type="submit"
+          class="w-full bg-[#0d5c74] text-white py-2 rounded-md hover:bg-[#084458] transition">
+          Log in
+        </button>
 
-        if (!input || !password) {
-          return showError("All fields are required.");
-        }
+        <p class="text-sm text-center pt-2 text-black">
+          Don’t have an account?
+          <a href="/register" class="text-[#0d5c74] font-medium hover:underline">Register</a>
+        </p>
+      </form>
+    </div>
+  </div>
 
-        if (input.includes('@')) {
-          if (!emailRegex.test(input)) {
-            return showError("Invalid email format.");
-          }
-        } else {
-          if (!usernameRegex.test(input)) {
-            return showError("Username must be 3-80 characters, no spaces, only a-z, 0-9, _ or -.");
-          }
-        }
+  <!-- Login validation logic -->
+  <script>
+    function validateLogin() {
+      const input = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      const error = document.getElementById('error');
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const usernameRegex = /^[a-zA-Z0-9_-]{3,80}$/;
 
-        error.classList.add('hidden');
-        return true;
+      if (!input || !password) {
+        return showError("All fields are required.");
       }
 
-      function showError(msg) {
-        const error = document.getElementById('error');
-        error.textContent = msg;
-        error.classList.remove('hidden');
-        return false;
+      if (input.includes('@')) {
+        if (!emailRegex.test(input)) {
+          return showError("Invalid email format.");
+        }
+      } else {
+        if (!usernameRegex.test(input)) {
+          return showError("Username must be 3-80 characters, no spaces, only a-z, 0-9, _ or -.");
+        }
       }
-    </script>
-  </body>
-  </html>
+
+      error.classList.add('hidden');
+      return true;
+    }
+
+    function showError(msg) {
+      const error = document.getElementById('error');
+      error.textContent = msg;
+      error.classList.remove('hidden');
+      return false;
+    }
+  </script>
+</body>
+</html>
