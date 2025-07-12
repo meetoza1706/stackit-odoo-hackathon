@@ -65,7 +65,7 @@
       }
 
       if (!passwordRegex.test(password)) {
-        return showError("Password must have uppercase, lowercase, number, and special character");
+        return showError("Password must have uppercase, lowercase, number,special character and also must be atleast 6 characters");
       }
 
       if (password !== cpassword) {
