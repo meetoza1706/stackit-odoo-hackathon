@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Register</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="flex items-center justify-center min-h-screen bg-gray-100">
+  <form method="POST" onsubmit="return validateForm()" class="bg-white p-6 rounded shadow-md w-full max-w-sm" novalidate>
+    <h2 class="text-xl font-semibold mb-4">Register</h2>
+
+    <label class="block text-sm mb-1">Username</label>
+    <input id="username" name="username" placeholder="Username" required minlength="3" maxlength="80"
+           class="w-full p-2 border rounded mb-3">
+
+    <label class="block text-sm mb-1">Email</label>
+    <input id="email" name="email" type="email" placeholder="Email" required
+           class="w-full p-2 border rounded mb-3">
+
+    <label class="block text-sm mb-1">Password</label>
+    <input id="password" name="password" type="password" placeholder="Password" required minlength="6" maxlength="120"
+           class="w-full p-2 border rounded mb-3">
+
+    <label class="block text-sm mb-1">Confirm Password</label>
+    <input id="cpassword" name="cpassword" type="password" placeholder="Confirm Password" required
+           class="w-full p-2 border rounded mb-3">
+
+    <label class="block text-sm mb-1">Admin Code (optional)</label>
+    <input name="admin_code" placeholder="Admin Code"
+           class="w-full p-2 border rounded mb-4">
+
+    <div id="error" class="text-red-600 text-sm mb-3 hidden"></div>
+    {% if server_error %}
+      <div class="text-red-600 text-sm mb-3">{{ server_error }}</div>
+    {% endif %}
+
+    <button type="submit"
+            class="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">
+      Register
+    </button>
+
+    <p class="mt-4 text-sm text-center">
+      Already have an account?
+      <a href="/login" class="text-blue-600 underline">Login</a>
+    </p>
+  </form>
+
+  <script>
+    function validateForm() {
+      const username = document.getElementById('username').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const cpassword = document.getElementById('cpassword').value;
+      const error = document.getElementById('error');
+
+      const usernameRegex = /^[a-zA-Z0-9_-]+$/;
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{6,}$/;
+
+      if (!usernameRegex.test(username)) {
+        return showError("Username must be alphanumeric and may contain _ or - (no spaces)");
+      }
+
+      if (!emailRegex.test(email)) {
+        return showError("Invalid email format");
+      }
+
+      if (!passwordRegex.test(password)) {
+        return showError("Password must have uppercase, lowercase, number, and special character");
+      }
+
+      if (password !== cpassword) {
+        return showError("Passwords do not match");
+      }
+
+      error.classList.add('hidden');
+      return true;
+    }
+
+    function showError(message) {
+      const error = document.getElementById('error');
+      error.textContent = message;
+      error.classList.remove('hidden');
+      return false;
+    }
+  </script>
+</body>
+</html>
